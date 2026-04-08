@@ -3,7 +3,24 @@
     "allow": [
       "Bash(cd:*)",
       "Bash(npm search:*)",
-      "Bash(yarn add:*)"
+      "Bash(yarn add:*)",
+      "Bash(sleep:*)",
+      "Bash(curl:*)",
+      "Bash(uvicorn:*)",
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(pip install:*)",
+      "Bash(which ollama:*)",
+      "Bash(snap list:*)",
+      "Bash(java:*)",
+      "Bash(pip show:*)",
+      "Bash(apt-cache show:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(wget:*)",
+      "Read(//mnt/f/**)",
+      "Bash(mkdir:*)",
+      "Bash(export:*)",
+      "Bash(cat:*)"
     ]
   }
 }

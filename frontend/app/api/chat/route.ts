@@ -1,29 +1,26 @@
 import { type UIMessage } from "ai";
-import { randomUUID } from "crypto";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8000";
+
+function sseChunk(obj: unknown): string {
+  return `data: ${JSON.stringify(obj)}\n\n`;
+}
+
+const extractText = (m: UIMessage): string =>
+  m.parts
+    .filter((p): p is { type: "text"; text: string } => p.type === "text")
+    .map((p) => p.text)
+    .join("");
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const lastMessage = messages[messages.length - 1];
-  const messageText =
-    typeof lastMessage?.content === "string"
-      ? lastMessage.content
-      : lastMessage?.content
-          ?.filter((p: { type: string }) => p.type === "text")
-          .map((p: { type: string; text: string }) => p.text)
-          .join("") ?? "";
+  const messageText = extractText(lastMessage);
 
   const history = messages.slice(0, -1).map((m) => ({
     role: m.role,
-    content:
-      typeof m.content === "string"
-        ? m.content
-        : m.content
-            ?.filter((p: { type: string }) => p.type === "text")
-            .map((p: { type: string; text: string }) => p.text)
-            .join("") ?? "",
+    content: extractText(m),
   }));
 
   const backendRes = await fetch(`${BACKEND_URL}/api/chat`, {
@@ -43,19 +40,19 @@ export async function POST(req: Request) {
 
   const { reply } = (await backendRes.json()) as { reply: string };
 
-  const messageId = randomUUID();
-  const encoded = JSON.stringify(reply);
   const body = [
-    `f:${JSON.stringify({ messageId })}`,
-    `0:${encoded}`,
-    `e:${JSON.stringify({ finishReason: "stop", usage: { promptTokens: 0, completionTokens: 0 }, isContinued: false })}`,
-    `d:${JSON.stringify({ finishReason: "stop", usage: { promptTokens: 0, completionTokens: 0 } })}`,
-  ].join("\n");
+    sseChunk({ type: "text-start", id: "text-1" }),
+    sseChunk({ type: "text-delta", id: "text-1", delta: reply }),
+    sseChunk({ type: "finish-step" }),
+    sseChunk({ type: "finish" }),
+    "data: [DONE]\n\n",
+  ].join("");
 
   return new Response(body, {
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "x-vercel-ai-data-stream": "v1",
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+      "x-vercel-ai-ui-message-stream": "v1",
     },
   });
 }
