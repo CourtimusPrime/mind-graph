@@ -1,0 +1,5 @@
+fastapi
+uvicorn[standard]
+httpx
+neo4j
+python-dotenv
