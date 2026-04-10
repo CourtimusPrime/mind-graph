@@ -1,8 +1,10 @@
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Callable, Awaitable
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from backend.config import OLLAMA_BASE_URL
@@ -79,7 +81,17 @@ async def health():
     return {"status": "ok"}
 
 
-@app.post("/api/chat", response_model=ChatResponse)
+async def _extract_and_upsert(combined_text: str, session_id: str) -> None:
+    """Background task: extract entities and upsert to Neo4j."""
+    try:
+        entities = await extract_entities(combined_text)
+        if db is not None:
+            await db.upsert_entities(entities, session_id, embed_fn)
+    except Exception as exc:
+        print(f"[entity extraction] error: {exc}")
+
+
+@app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
     if db is None or rag is None:
         raise HTTPException(status_code=503, detail="Service not ready")
@@ -87,18 +99,26 @@ async def chat_endpoint(request: ChatRequest):
     # 1. Retrieve graph context
     context = await rag.get_context(request.message, embed_fn)
 
-    # 2. Build message history and call the LLM
+    # 2. Build message history
     messages = request.history + [{"role": "user", "content": request.message}]
-    reply = await openrouter.chat(messages, context=context)
 
-    # 3. Extract entities from both the user message and the LLM reply
-    combined_text = f"{request.message}\n\n{reply}"
-    entities = await extract_entities(combined_text)
+    # 3. Stream the LLM reply; collect full text for entity extraction
+    async def generate():
+        chunks: list[str] = []
+        async for chunk in openrouter.chat_stream(messages, context=context):
+            chunks.append(chunk)
+            yield f"data: {chunk}\n\n"
 
-    # 4. Upsert extracted entities into the graph
-    await db.upsert_entities(entities, request.session_id, embed_fn)
+        # Schedule entity extraction after the stream is fully consumed
+        full_reply = "".join(chunks)
+        combined_text = f"{request.message}\n\n{full_reply}"
+        asyncio.create_task(_extract_and_upsert(combined_text, request.session_id))
 
-    return ChatResponse(reply=reply)
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/api/search")

@@ -201,13 +201,38 @@ const MessageError: FC = () => {
   );
 };
 
+const ThinkingShimmer: FC = () => (
+  <div className="px-2 py-1">
+    <span
+      className="text-sm font-medium"
+      style={{
+        background:
+          "linear-gradient(90deg, var(--color-muted-foreground) 0%, var(--color-foreground) 40%, var(--color-muted-foreground) 80%)",
+        backgroundSize: "200% auto",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text",
+        animation: "shimmer 1.6s linear infinite",
+      }}
+    >
+      Thinking…
+    </span>
+  </div>
+);
+
 const AssistantMessage: FC = () => {
+  const isRunning = useAuiState((s) => s.message.status.type === "running");
+  const hasText = useAuiState((s) =>
+    s.message.content.some((p) => p.type === "text" && (p as { type: "text"; text: string }).text.length > 0),
+  );
+
   return (
     <MessagePrimitive.Root
       className="aui-assistant-message-root fade-in slide-in-from-bottom-1 relative mx-auto w-full max-w-(--thread-max-width) animate-in py-3 duration-150"
       data-role="assistant"
     >
       <div className="aui-assistant-message-content wrap-break-word px-2 text-foreground leading-relaxed">
+        {isRunning && !hasText && <ThinkingShimmer />}
         <MessagePrimitive.Parts>
           {({ part }) => {
             if (part.type === "text") return <MarkdownText />;

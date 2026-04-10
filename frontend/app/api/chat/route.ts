@@ -39,15 +39,50 @@ export async function POST(req: Request) {
     return new Response(`Backend error: ${text}`, { status: 502 });
   }
 
-  const { reply } = (await backendRes.json()) as { reply: string };
+  const encoder = new TextEncoder();
 
-  const body = [
-    sseChunk({ type: "text-start", id: "text-1" }),
-    sseChunk({ type: "text-delta", id: "text-1", delta: reply }),
-    sseChunk({ type: "finish-step" }),
-    sseChunk({ type: "finish" }),
-    "data: [DONE]\n\n",
-  ].join("");
+  // Proxy the FastAPI SSE stream to assistant-ui's UI message stream format
+  const body = new ReadableStream({
+    async start(controller) {
+      controller.enqueue(
+        encoder.encode(sseChunk({ type: "text-start", id: "text-1" })),
+      );
+
+      const reader = backendRes.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() ?? "";
+
+          for (const part of parts) {
+            if (!part.startsWith("data: ")) continue;
+            const text = part.slice(6);
+            if (text) {
+              controller.enqueue(
+                encoder.encode(
+                  sseChunk({ type: "text-delta", id: "text-1", delta: text }),
+                ),
+              );
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      controller.enqueue(encoder.encode(sseChunk({ type: "finish-step" })));
+      controller.enqueue(encoder.encode(sseChunk({ type: "finish" })));
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      controller.close();
+    },
+  });
 
   return new Response(body, {
     headers: {
