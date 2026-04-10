@@ -19,7 +19,7 @@ Respond ONLY with valid JSON in this exact structure:
 
 Guidelines:
 - Use "Concept" for ideas, topics, technologies, people, places, roles.
-- Use "Project" for named projects, stories, screenplays, or initiatives.
+- Use "Project" for named projects, stories, screenplays, movies, or initiatives. IMPORTANT: Any time the user says they are writing, making, building, or working on something with a name — always create a Project node for it. E.g. "I am writing a movie called Centurion" → Project {name: "Centurion", content: "a movie about..."}, "I'm building an app called Taskr" → Project {name: "Taskr"}.
 - Use "Note" for specific facts, events, decisions, plot points, or narrative statements. For Notes, the name should be a short descriptive label (e.g. "inciting incident", "act 2 turning point") and content should be the full fact verbatim or closely paraphrased.
 - Use "Tag" for categories or labels.
 - Relationship types should be UPPER_SNAKE_CASE (e.g. RELATED_TO, PART_OF, USED_BY, INCITING_INCIDENT_OF).
