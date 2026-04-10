@@ -18,12 +18,13 @@ Respond ONLY with valid JSON in this exact structure:
 }
 
 Guidelines:
-- Use "Concept" for ideas, topics, technologies, people, places.
-- Use "Project" for named projects or initiatives.
-- Use "Note" for specific facts, observations, or statements.
+- Use "Concept" for ideas, topics, technologies, people, places, roles.
+- Use "Project" for named projects, stories, screenplays, or initiatives.
+- Use "Note" for specific facts, events, decisions, plot points, or narrative statements. For Notes, the name should be a short descriptive label (e.g. "inciting incident", "act 2 turning point") and content should be the full fact verbatim or closely paraphrased.
 - Use "Tag" for categories or labels.
-- Relationship types should be UPPER_SNAKE_CASE (e.g. RELATED_TO, PART_OF, USED_BY).
-- Keep names concise and canonical (prefer "Machine Learning" over "ML").
+- Relationship types should be UPPER_SNAKE_CASE (e.g. RELATED_TO, PART_OF, USED_BY, INCITING_INCIDENT_OF).
+- Keep Concept/Project names concise and canonical (prefer "Machine Learning" over "ML").
+- IMPORTANT: When the user describes a story event or plot point, always create a Note node capturing the full narrative detail in content, not just atomic concepts. E.g. if told "the inciting incident is X causes Y", create Note {name: "inciting incident", content: "X causes Y"} linked to the Project.
 - Only extract entities explicitly mentioned or strongly implied.
 - Return {"nodes": [], "relationships": []} if nothing is extractable."""
 
