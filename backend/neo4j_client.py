@@ -23,6 +23,36 @@ class Neo4jClient:
         async with self._driver.session() as session:
             await session.run("MATCH (n) DETACH DELETE n")
 
+    async def delete_node(self, label: str, name: str) -> int:
+        """
+        Delete a node by label and name, then delete any neighbours that
+        become orphans (no remaining connections) after the deletion.
+        Returns the total number of nodes deleted.
+        """
+        async with self._driver.session() as session:
+            # Collect neighbours that will become orphans once this node is gone.
+            # A neighbour is an orphan if all its connections lead only to this node.
+            result = await session.run(
+                """
+                MATCH (n) WHERE $label IN labels(n) AND n.name = $name
+                OPTIONAL MATCH (n)-[]-(neighbor)
+                WITH n, collect(DISTINCT neighbor) AS neighbors
+                UNWIND neighbors AS neighbor
+                OPTIONAL MATCH (neighbor)-[]-(other) WHERE other <> n
+                WITH n, neighbor, count(other) AS other_connections
+                WITH n, collect(CASE WHEN other_connections = 0 THEN neighbor ELSE null END) AS orphans
+                DETACH DELETE n
+                WITH orphans
+                UNWIND orphans AS orphan
+                DETACH DELETE orphan
+                RETURN size(orphans) + 1 AS deleted_count
+                """,
+                label=label,
+                name=name,
+            )
+            record = await result.single()
+            return record["deleted_count"] if record else 1
+
     # ------------------------------------------------------------------
     # Schema
     # ------------------------------------------------------------------

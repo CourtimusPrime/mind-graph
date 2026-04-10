@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCwIcon, ChevronDownIcon } from "lucide-react";
+import { RefreshCwIcon, ChevronDownIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -95,6 +95,14 @@ export function GraphPanel({ threadId }: GraphPanelProps) {
             key={label}
             label={label}
             nodes={grouped[label]}
+            onDelete={async (name) => {
+              await fetch("/api/nodes", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ label, name }),
+              });
+              fetchNodes();
+            }}
           />
         ))}
       </div>
@@ -102,7 +110,15 @@ export function GraphPanel({ threadId }: GraphPanelProps) {
   );
 }
 
-function NodeGroup({ label, nodes }: { label: string; nodes: GraphNode[] }) {
+function NodeGroup({
+  label,
+  nodes,
+  onDelete,
+}: {
+  label: string;
+  nodes: GraphNode[];
+  onDelete: (name: string) => Promise<void>;
+}) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -127,22 +143,57 @@ function NodeGroup({ label, nodes }: { label: string; nodes: GraphNode[] }) {
 
       <CollapsibleContent>
         {nodes.map((node) => (
-          <div
+          <NodeRow
             key={`${node.label}-${node.name}`}
-            className="mx-2 mb-0.5 rounded px-2 py-1.5 text-sm hover:bg-accent/50 transition-colors"
-            title={node.content ?? node.name}
-          >
-            <span className="truncate block text-sidebar-foreground">
-              {node.name}
-            </span>
-            {node.content && (
-              <span className="truncate block text-xs text-muted-foreground">
-                {node.content}
-              </span>
-            )}
-          </div>
+            node={node}
+            onDelete={onDelete}
+          />
         ))}
       </CollapsibleContent>
     </Collapsible>
+  );
+}
+
+function NodeRow({
+  node,
+  onDelete,
+}: {
+  node: GraphNode;
+  onDelete: (name: string) => Promise<void>;
+}) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleting(true);
+    await onDelete(node.name);
+    // Parent re-fetches so this component will unmount; no need to reset
+  };
+
+  return (
+    <div
+      className="group mx-2 mb-0.5 flex items-start gap-1 rounded px-2 py-1.5 text-sm hover:bg-accent/50 transition-colors"
+      title={node.content ?? node.name}
+    >
+      <div className="min-w-0 flex-1">
+        <span className="truncate block text-sidebar-foreground">
+          {node.name}
+        </span>
+        {node.content && (
+          <span className="truncate block text-xs text-muted-foreground">
+            {node.content}
+          </span>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={handleDelete}
+        disabled={deleting}
+        className="mt-0.5 shrink-0 rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+        title={`Delete ${node.name} and any orphaned connections`}
+      >
+        <Trash2Icon className="size-3.5" />
+      </button>
+    </div>
   );
 }

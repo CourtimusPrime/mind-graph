@@ -157,6 +157,14 @@ async def clear_data():
     return {"status": "cleared"}
 
 
+@app.delete("/api/nodes/{label}/{name}")
+async def delete_node(label: str, name: str):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Service not ready")
+    deleted = await db.delete_node(label, name)
+    return {"status": "deleted", "deleted_count": deleted}
+
+
 @app.get("/api/nodes")
 async def list_nodes():
     if db is None:
