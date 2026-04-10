@@ -11,7 +11,6 @@ import {
 import { cn } from "@/lib/utils";
 
 interface GraphNode {
-  id: string;
   label: string;
   name: string;
   content?: string;
@@ -39,7 +38,7 @@ export function GraphPanel({ threadId }: GraphPanelProps) {
       const res = await fetch("/api/nodes");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setNodes(Array.isArray(data) ? data : []);
+      setNodes(Array.isArray(data.nodes) ? data.nodes : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
@@ -129,7 +128,7 @@ function NodeGroup({ label, nodes }: { label: string; nodes: GraphNode[] }) {
       <CollapsibleContent>
         {nodes.map((node) => (
           <div
-            key={node.id}
+            key={`${node.label}-${node.name}`}
             className="mx-2 mb-0.5 rounded px-2 py-1.5 text-sm hover:bg-accent/50 transition-colors"
             title={node.content ?? node.name}
           >
