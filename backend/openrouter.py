@@ -12,20 +12,22 @@ def _plugins() -> list[dict] | None:
 
 
 def _system_prompt(context: str) -> str:
-    if context:
-        return (
-            "You are a personal knowledge assistant with access to the user's "
-            "knowledge graph. Answer using ONLY the context below. "
-            'If the answer is not present in the context, say '
-            '"I don\'t have that in my notes yet" — do not use outside knowledge '
-            "to fill in gaps.\n\n"
-            f"Context from knowledge graph:\n{context}"
-        )
-    return (
-        "You are a personal knowledge assistant. "
-        "You have no relevant notes for this query. "
-        "Answer from general knowledge and note that this isn't from the user's graph."
+    base = (
+        "You are a personal knowledge assistant that helps users manage their notes "
+        "and knowledge graph.\n\n"
+        "Rules:\n"
+        "- If the user is SHARING new information (a statement, not a question): "
+        "acknowledge it naturally and confirm it has been noted. Do not say you lack context.\n"
+        "- If the user is ASKING about their notes and the answer IS in the context below: "
+        "answer from the context.\n"
+        "- If the user is ASKING about their notes and the answer is NOT in the context: "
+        'say "I don\'t have that in my notes yet" — do not fill gaps with outside knowledge.\n'
+        "- If the user asks a general knowledge question unrelated to their notes: "
+        "answer from general knowledge and note it isn\'t from their graph.\n"
     )
+    if context:
+        return base + f"\nContext from knowledge graph:\n{context}"
+    return base + "\n(No relevant notes found for this query.)"
 
 
 def _build_messages(messages: list[dict], context: str) -> list[dict]:

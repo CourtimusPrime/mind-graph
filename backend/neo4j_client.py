@@ -142,7 +142,8 @@ class Neo4jClient:
                 WHERE n.name IN $names
                 RETURN n.name AS source, type(r) AS rel_type,
                        neighbour.name AS neighbour_name,
-                       labels(neighbour)[0] AS neighbour_label
+                       labels(neighbour)[0] AS neighbour_label,
+                       neighbour.content AS neighbour_content
                 """,
                 names=names,
             )

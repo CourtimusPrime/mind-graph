@@ -46,9 +46,11 @@ class GraphRAG:
         if neighbours:
             neighbour_lines.append("\nNeighbours:")
             for row in neighbours:
+                neighbour_content = row.get("neighbour_content") or ""
+                neighbour_detail = f": {neighbour_content}" if neighbour_content else ""
                 neighbour_lines.append(
                     f"  {row['source']} --[{row['rel_type']}]--> "
-                    f"{row['neighbour_name']} ({row['neighbour_label']})"
+                    f"[{row['neighbour_label']}] {row['neighbour_name']}{neighbour_detail}"
                 )
 
         # Combine and enforce character cap, truncating neighbours first
