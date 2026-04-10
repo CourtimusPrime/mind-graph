@@ -15,3 +15,5 @@ OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 
 EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "768"))
 DEDUP_THRESHOLD = float(os.getenv("DEDUP_THRESHOLD", "0.92"))
+
+OPENROUTER_WEB_SEARCH = os.getenv("OPENROUTER_WEB_SEARCH", "false").lower() == "true"

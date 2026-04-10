@@ -152,6 +152,25 @@ class Neo4jClient:
             return rows
 
     # ------------------------------------------------------------------
+    # Session helpers
+    # ------------------------------------------------------------------
+
+    async def get_session_project(self, session_id: str) -> str | None:
+        """Return the name of the most recently created Project for this session."""
+        async with self._driver.session() as session:
+            result = await session.run(
+                """
+                MATCH (n:Project {session_id: $sid})
+                RETURN n.name AS name
+                ORDER BY n.name
+                LIMIT 1
+                """,
+                sid=session_id,
+            )
+            record = await result.single()
+            return record["name"] if record else None
+
+    # ------------------------------------------------------------------
     # Upsert
     # ------------------------------------------------------------------
 
@@ -177,7 +196,9 @@ class Neo4jClient:
             if not name:
                 continue
 
-            embedding = await embed_fn(name)
+            content = node.get("content", "")
+            embed_text = f"{name}: {content}" if content else name
+            embedding = await embed_fn(embed_text)
             existing = await self.find_similar_node(label, embedding)
 
             if existing:
@@ -202,12 +223,15 @@ class Neo4jClient:
                         f"""
                         MERGE (n:{label} {{name: $name}})
                         ON CREATE SET n.embedding = $embedding,
-                                      n.session_id = $session_id
-                        ON MATCH  SET n.embedding = $embedding
+                                      n.session_id = $session_id,
+                                      n.content = $content
+                        ON MATCH  SET n.embedding = $embedding,
+                                      n.content = CASE WHEN $content <> '' THEN $content ELSE n.content END
                         """,
                         name=name,
                         embedding=embedding,
                         session_id=session_id,
+                        content=content,
                     )
 
         # Create relationships using canonical names

@@ -28,16 +28,17 @@ Guidelines:
 - Return {"nodes": [], "relationships": []} if nothing is extractable."""
 
 
-async def extract_entities(text: str) -> dict:
+async def extract_entities(text: str, project_hint: str | None = None) -> dict:
     """
     Use OpenRouter to extract a structured node/relationship graph from *text*.
     Returns {"nodes": [...], "relationships": [...]}.
     """
+    prefix = f'[Context: this note relates to the project "{project_hint}"]\n\n' if project_hint else ""
     payload = {
         "model": OPENROUTER_MODEL,
         "messages": [
             {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": text},
+            {"role": "user", "content": prefix + text},
         ],
         "response_format": {"type": "json_object"},
     }

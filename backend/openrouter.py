@@ -2,22 +2,34 @@ import json
 from collections.abc import AsyncGenerator
 
 import httpx
-from backend.config import OPENROUTER_API_KEY, OPENROUTER_MODEL
+from backend.config import OPENROUTER_API_KEY, OPENROUTER_MODEL, OPENROUTER_WEB_SEARCH
 
 _BASE_URL = "https://openrouter.ai/api/v1"
 
 
+def _plugins() -> list[dict] | None:
+    return [{"id": "web"}] if OPENROUTER_WEB_SEARCH else None
+
+
+def _system_prompt(context: str) -> str:
+    if context:
+        return (
+            "You are a personal knowledge assistant with access to the user's "
+            "knowledge graph. Answer using ONLY the context below. "
+            'If the answer is not present in the context, say '
+            '"I don\'t have that in my notes yet" — do not use outside knowledge '
+            "to fill in gaps.\n\n"
+            f"Context from knowledge graph:\n{context}"
+        )
+    return (
+        "You are a personal knowledge assistant. "
+        "You have no relevant notes for this query. "
+        "Answer from general knowledge and note that this isn't from the user's graph."
+    )
+
+
 def _build_messages(messages: list[dict], context: str) -> list[dict]:
-    if not context:
-        return messages
-    system = {
-        "role": "system",
-        "content": (
-            "You are a personal knowledge assistant. Use the following "
-            "context from the user's knowledge graph to inform your "
-            f"response:\n\n{context}"
-        ),
-    }
+    system = {"role": "system", "content": _system_prompt(context)}
     return [system] + messages
 
 
@@ -34,6 +46,8 @@ async def chat(messages: list[dict], context: str = "") -> str:
         "model": OPENROUTER_MODEL,
         "messages": _build_messages(messages, context),
     }
+    if plugins := _plugins():
+        payload["plugins"] = plugins
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
             f"{_BASE_URL}/chat/completions",
@@ -54,6 +68,8 @@ async def chat_stream(
         "messages": _build_messages(messages, context),
         "stream": True,
     }
+    if plugins := _plugins():
+        payload["plugins"] = plugins
     async with httpx.AsyncClient(timeout=60.0) as client:
         async with client.stream(
             "POST",

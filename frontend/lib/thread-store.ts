@@ -54,8 +54,7 @@ interface ThreadStore {
 function initState(): { threads: StoredThread[]; activeThreadId: string } {
   // SSR guard — localStorage not available on server
   if (typeof window === "undefined") {
-    const t = makeThread();
-    return { threads: [t], activeThreadId: t.id };
+    return { threads: [], activeThreadId: "" };
   }
   const threads = loadThreads();
   if (threads.length === 0) {

@@ -84,7 +84,8 @@ async def health():
 async def _extract_and_upsert(combined_text: str, session_id: str) -> None:
     """Background task: extract entities and upsert to Neo4j."""
     try:
-        entities = await extract_entities(combined_text)
+        project_hint = await db.get_session_project(session_id) if db is not None else None
+        entities = await extract_entities(combined_text, project_hint=project_hint)
         if db is not None:
             await db.upsert_entities(entities, session_id, embed_fn)
     except Exception as exc:
