@@ -18,6 +18,11 @@ class Neo4jClient:
     async def close(self):
         await self._driver.close()
 
+    async def clear_all_data(self) -> None:
+        """Delete all nodes and relationships from the graph."""
+        async with self._driver.session() as session:
+            await session.run("MATCH (n) DETACH DELETE n")
+
     # ------------------------------------------------------------------
     # Schema
     # ------------------------------------------------------------------

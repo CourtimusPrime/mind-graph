@@ -25,7 +25,8 @@ Guidelines:
 - Relationship types should be UPPER_SNAKE_CASE (e.g. RELATED_TO, PART_OF, USED_BY, INCITING_INCIDENT_OF).
 - Keep Concept/Project names concise and canonical (prefer "Machine Learning" over "ML").
 - IMPORTANT: When the user describes a story event or plot point, always create a Note node capturing the full narrative detail in content, not just atomic concepts. E.g. if told "the inciting incident is X causes Y", create Note {name: "inciting incident", content: "X causes Y"} linked to the Project. If a project context is provided, prefix the Note name with the project name (e.g. "Centurion inciting incident" not just "inciting incident").
-- Only extract entities explicitly mentioned or strongly implied.
+- CRITICAL: Extract ONLY from the literal text provided by the user. Never substitute, complete, or augment with information from your training data. If the user says "the inciting incident is X causes Y", the Note content must be exactly "X causes Y" — not anything you know about a project or story with that name.
+- Only extract entities explicitly stated in the text.
 - Return {"nodes": [], "relationships": []} if nothing is extractable."""
 
 

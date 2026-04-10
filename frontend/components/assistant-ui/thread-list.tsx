@@ -11,6 +11,7 @@ interface ThreadListProps {
   onNew: () => void;
   onSwitch: (id: string) => void;
   onDelete: (id: string) => void;
+  onClearAll: () => void;
 }
 
 function relativeDate(ts: number): string {
@@ -30,21 +31,43 @@ export function ThreadList({
   onNew,
   onSwitch,
   onDelete,
+  onClearAll,
 }: ThreadListProps) {
+  function handleClearAll() {
+    if (
+      window.confirm(
+        "This will permanently delete all conversations and knowledge graph data. Continue?",
+      )
+    ) {
+      onClearAll();
+    }
+  }
+
   return (
     <aside className="flex h-dvh w-64 shrink-0 flex-col border-r bg-sidebar">
       <div className="flex items-center justify-between border-b px-3 py-3">
         <span className="text-sm font-semibold text-sidebar-foreground">
           Chats
         </span>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onNew}
-          title="New chat"
-        >
-          <PlusIcon />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleClearAll}
+            title="Clear all data"
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2Icon />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onNew}
+            title="New chat"
+          >
+            <PlusIcon />
+          </Button>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-1">

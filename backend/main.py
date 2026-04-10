@@ -84,7 +84,14 @@ async def health():
 async def _extract_and_upsert(combined_text: str, session_id: str) -> None:
     """Background task: extract entities and upsert to Neo4j."""
     try:
+        # Use existing session project if available; fall back to any Project
+        # node extracted from this message so first-message Notes get prefixed.
         project_hint = await db.get_session_project(session_id) if db is not None else None
+        if not project_hint:
+            # Quick pre-pass to detect project name from this message
+            pre = await extract_entities(combined_text)
+            project_nodes = [n["name"] for n in pre.get("nodes", []) if n.get("type") == "Project"]
+            project_hint = project_nodes[0] if project_nodes else None
         entities = await extract_entities(combined_text, project_hint=project_hint)
         if db is not None:
             await db.upsert_entities(entities, session_id, embed_fn)
@@ -140,6 +147,14 @@ async def search(
         for node in results
     ]
     return {"results": clean, "count": len(clean)}
+
+
+@app.delete("/api/data")
+async def clear_data():
+    if db is None:
+        raise HTTPException(status_code=503, detail="Service not ready")
+    await db.clear_all_data()
+    return {"status": "cleared"}
 
 
 @app.get("/api/nodes")

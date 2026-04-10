@@ -49,6 +49,7 @@ interface ThreadStore {
   renameThread: (id: string, title: string) => void;
   saveMessages: (threadId: string, msgs: StoredMessage[]) => void;
   loadMessages: (threadId: string) => StoredMessage[];
+  clearAll: () => void;
 }
 
 function initState(): { threads: StoredThread[]; activeThreadId: string } {
@@ -149,6 +150,13 @@ export const useThreadStore = create<ThreadStore>((set, get) => {
       } catch {
         return [];
       }
+    },
+
+    clearAll() {
+      get().threads.forEach((t) => localStorage.removeItem(msgsKey(t.id)));
+      const first = makeThread();
+      localStorage.setItem(THREADS_KEY, JSON.stringify([first]));
+      set({ threads: [first], activeThreadId: first.id });
     },
   };
 });

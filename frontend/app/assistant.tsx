@@ -80,8 +80,13 @@ const ThreadChat = memo(function ThreadChat({ threadId }: { threadId: string }) 
 });
 
 export const Assistant = () => {
-  const { threads, activeThreadId, createThread, switchThread, deleteThread } =
+  const { threads, activeThreadId, createThread, switchThread, deleteThread, clearAll } =
     useThreadStore();
+
+  async function handleClearAll() {
+    await fetch("/api/data", { method: "DELETE" });
+    clearAll();
+  }
 
   return (
     <div className="flex h-dvh overflow-hidden">
@@ -91,6 +96,7 @@ export const Assistant = () => {
         onNew={createThread}
         onSwitch={switchThread}
         onDelete={deleteThread}
+        onClearAll={handleClearAll}
       />
       <ThreadChat key={activeThreadId} threadId={activeThreadId} />
       <GraphPanel threadId={activeThreadId} />
