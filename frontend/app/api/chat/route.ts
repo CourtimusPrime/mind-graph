@@ -1,6 +1,5 @@
 import { type UIMessage } from "ai";
-
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8000";
+import { resolveBackendUrl } from "@/lib/backend-url";
 
 function sseChunk(obj: unknown): string {
   return `data: ${JSON.stringify(obj)}\n\n`;
@@ -13,7 +12,8 @@ const extractText = (m: UIMessage): string =>
     .join("");
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, threadId }: { messages: UIMessage[]; threadId?: string } =
+    await req.json();
 
   const lastMessage = messages[messages.length - 1];
   const messageText = extractText(lastMessage);
@@ -23,13 +23,14 @@ export async function POST(req: Request) {
     content: extractText(m),
   }));
 
+  const BACKEND_URL = await resolveBackendUrl();
   const backendRes = await fetch(`${BACKEND_URL}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message: messageText,
       history,
-      session_id: "default",
+      session_id: threadId ?? "default",
     }),
   });
 

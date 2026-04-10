@@ -112,9 +112,10 @@ async def search(
     embedding = await embed_fn(q)
     results = await db.vector_search(embedding, top_k=limit)
 
-    # Strip internal fields before returning
+    # Strip internal fields and embedding vectors before returning
+    _exclude = {"embedding"}
     clean = [
-        {k: v for k, v in node.items() if not k.startswith("_")}
+        {k: v for k, v in node.items() if not k.startswith("_") and k not in _exclude}
         for node in results
     ]
     return {"results": clean, "count": len(clean)}

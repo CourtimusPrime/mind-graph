@@ -20,7 +20,10 @@
       "Read(//mnt/f/**)",
       "Bash(mkdir:*)",
       "Bash(export:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pkill:*)",
+      "Bash(find:*)"
     ]
   }
 }
