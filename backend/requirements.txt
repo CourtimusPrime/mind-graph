@@ -3,3 +3,4 @@ uvicorn[standard]
 httpx
 neo4j
 python-dotenv
+networkx

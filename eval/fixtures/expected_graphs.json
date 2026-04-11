@@ -1,0 +1,34 @@
+{
+  "project_intro": {
+    "must_have_nodes": [
+      {"name_contains": "MindGraph", "type": "Project"},
+      {"name_contains": "Neo4j", "type": "Concept"},
+      {"name_contains": "Ollama", "type": "Concept"}
+    ],
+    "must_have_edges": [
+      {"source_contains": "MindGraph", "target_contains": "Neo4j"},
+      {"source_contains": "MindGraph", "target_contains": "Ollama"}
+    ],
+    "must_not_have_nodes": []
+  },
+  "note_with_project": {
+    "must_have_nodes": [
+      {"name_contains": "Centurion", "type": "Project"},
+      {"name_contains": "inciting incident", "type": "Note"}
+    ],
+    "note_name_prefix_check": {
+      "project": "Centurion",
+      "note_type": "Note",
+      "expected_prefix": "Centurion"
+    },
+    "must_have_edges": [
+      {"source_type": "Note", "target_contains": "Centurion"}
+    ]
+  },
+  "concept_dedup": {
+    "dedup_check": {
+      "concept_name_pattern": "machine learning|ML",
+      "max_nodes": 1
+    }
+  }
+}

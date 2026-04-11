@@ -1,0 +1,90 @@
+[
+  {
+    "id": "project_intro",
+    "description": "Introducing a named project with a core concept",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I'm building a knowledge graph called MindGraph. It uses Neo4j for graph storage and Ollama for embeddings."
+      }
+    ],
+    "expected_entities": {
+      "nodes": [
+        {"name": "MindGraph", "type": "Project"},
+        {"name": "Neo4j", "type": "Concept"},
+        {"name": "Ollama", "type": "Concept"}
+      ],
+      "relationships": [
+        {"source": "MindGraph", "target": "Neo4j"},
+        {"source": "MindGraph", "target": "Ollama"}
+      ]
+    }
+  },
+  {
+    "id": "note_with_project",
+    "description": "Adding a note that should be prefixed with the project name",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I'm working on Centurion, a historical drama. The inciting incident is that Marcus discovers a conspiracy against the Emperor."
+      }
+    ],
+    "expected_entities": {
+      "nodes": [
+        {"name": "Centurion", "type": "Project"},
+        {"name": "Centurion inciting incident", "type": "Note"}
+      ],
+      "relationships": [
+        {"source": "Centurion inciting incident", "target": "Centurion"}
+      ]
+    }
+  },
+  {
+    "id": "concept_dedup",
+    "description": "Semantically equivalent concepts should deduplicate",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I use machine learning in my projects."
+      },
+      {
+        "role": "user",
+        "content": "I rely on ML for predictions."
+      }
+    ],
+    "expected_entities": {
+      "nodes": [
+        {"name": "Machine Learning", "type": "Concept"}
+      ],
+      "dedup_check": true
+    }
+  },
+  {
+    "id": "tag_extraction",
+    "description": "Tags should be extracted for categorical labels",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tag this as urgent and backend-related."
+      }
+    ],
+    "expected_entities": {
+      "nodes": [
+        {"name": "urgent", "type": "Tag"},
+        {"name": "backend-related", "type": "Tag"}
+      ]
+    }
+  },
+  {
+    "id": "retrieval_check",
+    "description": "Previously stored facts should be retrievable",
+    "setup_messages": [
+      {
+        "role": "user",
+        "content": "My API uses JWT tokens for authentication and Redis for session caching."
+      }
+    ],
+    "query": "What does my API use for authentication?",
+    "expected_in_context": ["JWT", "authentication"]
+  }
+]
